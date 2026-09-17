@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="it">
+    <head>
+        <meta charset="UTF-8">
+        <title>Tavolo Poker Multiplayer - VIP & AI Room</title>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+        
+        <style>
+            * { box-sizing: border-box; }
+            body { 
+                font-family: 'Poppins', sans-serif; margin: 0; padding: 0;
+                background: radial-gradient(circle at center, #2a2a35 0%, #101014 100%);
+                color: #ffffff; min-height: 100vh;
+                display: flex; flex-direction: column; align-items: center;
+                transition: background 0.5s ease;
+            }
+
+            #loginArea {
+                margin-top: 15vh; background: rgba(255, 255, 255, 0.05);
+                padding: 50px; border-radius: 20px;
+                box-shadow: 0 15px 35px rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+                border: 1px solid rgba(255,255,255,0.1); text-align: center;
+            }
+            #loginArea h2 { margin-top: 0; color: #ffd700; font-weight: 800; font-size: 2rem;}
+            input[type="text"] {
+                padding: 15px 20px; font-size: 16px; border: none; border-radius: 10px;
+                width: 100%; max-width: 300px; margin-bottom: 20px;
+                background: rgba(0,0,0,0.5); color: white; outline: none;
+                border: 1px solid rgba(255,255,255,0.2); transition: border-color 0.3s;
+            }
+            input[type="text"]:focus { border-color: #ffd700; }
+            
+            button, .btn-poker {
+                background: linear-gradient(135deg, #ffd700 0%, #d4af37 100%);
+                color: #111; border: none; padding: 12px 25px;
+                font-size: 16px; font-weight: 600; border-radius: 10px;
+                cursor: pointer; transition: all 0.3s ease; font-family: 'Poppins', sans-serif; margin: 5px;
+            }
+            button:hover, .btn-poker:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4); }
+            
+            .switch-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px; }
+            .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+            .switch input { opacity: 0; width: 0; height: 0; }
+            .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+            .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+            input:checked + .slider { background-color: #00e5ff; box-shadow: 0 0 15px #00e5ff; }
+            input:checked + .slider:before { transform: translateX(26px); }
+            .toggle-label { font-size: 1.2rem; font-weight: bold; color: #ccc; transition: color 0.3s; }
+            input:checked ~ .toggle-label { color: #00e5ff; text-shadow: 0 0 10px rgba(0, 229, 255, 0.5); }
+
+            #gameArea { display: none; width: 100%; max-width: 1000px; padding: 20px; animation: fadeIn 0.8s ease-out; }
+            @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+            #tableTitle { text-align: center; color: #aaa; font-weight: 400; font-size: 1.2rem; margin-bottom: 20px; }
+            
+            #tavoloVerde {
+                background: radial-gradient(ellipse at center, #2e7d32 0%, #103314 100%);
+                border: 15px solid #3e2723; border-radius: 150px; padding: 50px 20px;
+                box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,0,0,0.6);
+                text-align: center; position: relative; margin-bottom: 40px;
+                transition: all 0.5s ease; overflow: hidden;
+            }
+            #tavoloVerde.ai-mode {
+                background: radial-gradient(ellipse at center, #0f2027 0%, #203a43 60%, #2c5364 100%);
+                border-color: #00e5ff;
+                box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 40px rgba(0, 229, 255, 0.4), inset 0 0 40px rgba(0, 229, 255, 0.3);
+            }
+            #tavoloVerde.ai-mode .badge-soldi { border-color: #00e5ff; color: #00e5ff; background: rgba(0, 229, 255, 0.1); }
+            
+            .badge-soldi {
+                background: rgba(0, 0, 0, 0.6); border: 2px solid #ffd700; color: #ffd700;
+                padding: 8px 20px; border-radius: 30px; font-weight: 800; font-size: 1.2rem;
+                display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.5); backdrop-filter: blur(5px);
+                transition: all 0.5s ease;
+            }
+            #piattoContainer { margin-bottom: 25px; font-size: 1.5rem; padding: 10px 40px;}
+            .info-tavolo { display: flex; justify-content: space-around; align-items: center; margin-top: 30px; }
+            .sezione-titolo { color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 2px; font-size: 0.9rem; margin-bottom: 10px; margin-top: 0;}
+            
+            .carte-container { min-height: 110px; display: flex; justify-content: center; gap: 10px; align-items: center; margin-bottom: 20px;}
+            .carta-gioco {
+                display: inline-block; width: 75px; height: 110px;
+                background: linear-gradient(135deg, #ffffff 0%, #f2f2f2 100%);
+                border-radius: 8px; box-shadow: 3px 5px 15px rgba(0,0,0,0.6);
+                position: relative; font-family: 'Courier New', Courier, monospace;
+                border: 1px solid #ddd; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+            @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+            .valore-carta { font-size: 28px; font-weight: bold; position: absolute; top: 5px; left: 8px; line-height: 1;}
+            .seme-carta { font-size: 45px; position: absolute; top: 40px; left: 50%; transform: translateX(-50%); }
+
+            .pannello-controlli {
+                background: rgba(25, 25, 35, 0.8); border: 1px solid rgba(255,255,255,0.1);
+                padding: 25px; border-radius: 15px; margin-bottom: 30px;
+                text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            }
+            #turnoText { margin-top: 0; color: #4dd0e1; font-size: 1.3rem; margin-bottom: 15px; font-weight: 600;}
+
+            .chat-box { background: rgba(0, 0, 0, 0.3); border-radius: 10px; padding: 20px; border: 1px solid rgba(255,255,255,0.05); }
+            .chat-input-area { display: flex; gap: 10px; margin-bottom: 15px; }
+            .chat-input-area input { flex-grow: 1; margin: 0; }
+            .chat-input-area button { background: #4caf50; color: white; padding: 15px; margin: 0;}
+            #messages { list-style-type: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; }
+            #messages li { padding: 8px 15px; margin-bottom: 5px; background-color: rgba(255,255,255,0.05); border-radius: 5px; font-size: 0.9rem; border-left: 3px solid #ffd700; }
+
+            #actionToast {
+                position: absolute;
+                top: 30%; left: 50%; transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.85); color: #fff;
+                padding: 15px 30px; border-radius: 30px;
+                font-size: 1.5rem; font-weight: bold; border: 2px solid #ffd700;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 100;
+                opacity: 0; pointer-events: none;
+                transition: opacity 0.3s ease, transform 0.3s ease;
+            }
+            #actionToast.show { opacity: 1; transform: translate(-50%, -60%); }
+
+            #winnerOverlay {
+                position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);
+                border-radius: 135px; display: flex; flex-direction: column;
+                justify-content: center; align-items: center;
+                z-index: 50; opacity: 0; pointer-events: none;
+                transition: opacity 0.5s ease;
+            }
+            #winnerOverlay.show { opacity: 1; pointer-events: auto; }
+            #winnerOverlay h2 { color: #ffd700; font-size: 2.5rem; margin: 0 0 15px 0; text-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+            #winnerText {
+                color: white; font-size: 1.2rem; white-space: pre-line; 
+                background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; line-height: 1.5;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="loginArea">
+            <h2>🃏 VIP Poker Room</h2>
+            <input type="text" id="usernameInput" placeholder="Inserisci il tuo nickname..." autocomplete="off"/>
+            <br>
+            <button onclick="joinTable()">Siediti al Tavolo</button>
+        </div>
+
+        <div id="gameArea">
+            <h3 id="tableTitle"></h3>
+
+            <div id="startSection" class="pannello-controlli" style="border: 2px dashed rgba(255,255,255,0.3);">
+                <div class="switch-container">
+                    <label class="switch">
+                        <input type="checkbox" id="aiToggle" onchange="aggiornaTemaTavolo()">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="toggle-label">Modalità AI 🤖</span>
+                </div>
+                <button class="btn-poker" style="background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%); color: white; font-size: 1.5rem; padding: 15px 40px;" onclick="inviaStart()">🚀 AVVIA PARTITA</button>
+            </div>
+
+            <div id="tavoloVerde">
+                <div id="winnerOverlay">
+                    <h2>🏆 MANO FINITA!</h2>
+                    <div id="winnerText">Elaborazione risultati...</div>
+                </div>
+
+                <div id="actionToast">Mossa</div>
+
+                <div class="badge-soldi" id="piattoContainer">Piatto: <span id="valorePiatto">0</span> 🪙</div>
+                <h4 class="sezione-titolo">Carte Comuni (Board)</h4>
+                <div id="carteTavolo" class="carte-container">
+                    <span style="color: rgba(255,255,255,0.3); font-weight: bold;">[In attesa]</span>
+                </div>
+                
+                <div class="info-tavolo">
+                    <div class="badge-soldi" style="border-color: #4caf50; color: #4caf50;">Stack: <span id="valoreMieFiches">0</span> 🪙</div>
+                    <div>
+                        <h4 class="sezione-titolo">Le Tue Carte (Hole)</h4>
+                        <div id="mieCarte" class="carte-container" style="min-height: 0; margin-bottom: 0;">
+                            <span style="color: rgba(255,255,255,0.3); font-weight: bold;">[Nessuna]</span>
+                        </div>
+                    </div>
+                    <div class="badge-soldi" style="border-color: #2196f3; color: #2196f3;">Banca: <span id="valoreBanca">1000</span> 💰</div>
+                </div>
+            </div>
+
+            <div class="pannello-controlli" id="pannelloAzioni" style="display: none;">
+                <h4 id="turnoText">In attesa...</h4>
+                <div id="bottoniAzione"></div>
+            </div>
+            
+            <div class="chat-box">
+                <h4 class="sezione-titolo">Chat e Log</h4>
+                <div class="chat-input-area">
+                    <input type="text" id="actionInput" placeholder="Scrivi un messaggio in chat..." autocomplete="off"/>
+                    <button onclick="sendAction()">Invia</button>
+                </div>
+                <ul id='messages'></ul>
+            </div>
+        </div>
+
+        <script>
+            var ws = null;
+            var myUsername = "";
+            const nomiMosse = { 0: "Fold 🏳️", 1: "Check / Call 💵", 2: "Raise Min 💰", 3: "Raise Max 🔥", 4: "All-In 🚀" };
+
+            function mostraNotificaAzione(messaggio) {
+                var toast = document.getElementById("actionToast");
+                toast.innerText = messaggio;
+                toast.classList.add("show");
+                setTimeout(function() { toast.classList.remove("show"); }, 3000);
+            }
+
+            function aggiornaTemaTavolo() {
+                const isAi = document.getElementById("aiToggle").checked;
+                const tavolo = document.getElementById("tavoloVerde");
+                if (isAi) { tavolo.classList.add("ai-mode"); } else { tavolo.classList.remove("ai-mode"); }
+            }
+
+            function inviaStart() {
+                const usaAi = document.getElementById("aiToggle").checked;
+                const pacchettoStart = { "comando": "START", "usa_ai": usaAi };
+                ws.send(JSON.stringify(pacchettoStart));
+                document.getElementById("startSection").style.display = "none";
+                document.getElementById("pannelloAzioni").style.display = "block";
+                document.getElementById("winnerOverlay").classList.remove("show");
+            }
+
+            function joinTable() {
+                var input = document.getElementById("usernameInput");
+                myUsername = input.value.trim();
+                if (!myUsername) return;
+
+                ws = new WebSocket("ws://localhost:8000/ws/" + encodeURIComponent(myUsername));
+
+                ws.onopen = function() {
+                    document.getElementById("loginArea").style.display = "none";
+                    document.getElementById("gameArea").style.display = "block";
+                    document.getElementById("tableTitle").innerText = "Benvenuto, " + myUsername;
+                };
+
+                ws.onmessage = function(event) {
+                    try {
+                        var dati = JSON.parse(event.data);
+
+                        if (dati.tipo === "aggiornamento_carte") {
+                            document.getElementById("valorePiatto").innerText = dati.piatto;
+                            document.getElementById("valoreMieFiches").innerText = dati.mie_fiches;
+                            var mieCarteHTML = "";
+                            dati.mano.forEach(function(carta) { mieCarteHTML += creaCartaHTML(carta); });
+                            document.getElementById("mieCarte").innerHTML = mieCarteHTML !== "" ? mieCarteHTML : '<span style="color: rgba(255,255,255,0.3);">[Nessuna]</span>';
+
+                            var carteTavoloHTML = "";
+                            dati.pubbliche.forEach(function(carta) { carteTavoloHTML += creaCartaHTML(carta); });
+                            document.getElementById("carteTavolo").innerHTML = carteTavoloHTML !== "" ? carteTavoloHTML : '<span style="color: rgba(255,255,255,0.3);">[In attesa]</span>';
+                        }
+
+                        if (dati.tipo === "notifica_azione") {
+                            mostraNotificaAzione(dati.messaggio);
+                            aggiungiMessaggioChat(dati.messaggio);
+                        }
+
+                        if (dati.tipo === "errore_avvio") {
+                            alert(dati.messaggio);
+                            document.getElementById("startSection").style.display = "block";
+                            document.getElementById("pannelloAzioni").style.display = "none";
+                        }
+
+                        if (dati.tipo === "cambio_turno") {
+                            document.getElementById("startSection").style.display = "none";
+                            document.getElementById("pannelloAzioni").style.display = "block";
+                            
+                            document.getElementById("winnerOverlay").classList.remove("show");
+
+                            document.getElementById("turnoText").innerText = "Tocca a: " + dati.giocatore_attivo;
+                            var bottoniDiv = document.getElementById("bottoniAzione");
+                            bottoniDiv.innerHTML = ""; 
+
+                            if (dati.giocatore_attivo === myUsername) {
+                                dati.azioni.forEach(function(azione_id) {
+                                    var btn = document.createElement("button");
+                                    btn.className = "btn-poker";
+                                    if(azione_id === 0) btn.style.background = "linear-gradient(135deg, #ef5350 0%, #c62828 100%)";
+                                    if(azione_id === 1) btn.style.background = "linear-gradient(135deg, #42a5f5 0%, #1565c0 100%)";
+                                    if(azione_id > 1) btn.style.background = "linear-gradient(135deg, #ffa726 0%, #ef6c00 100%)";
+                                    btn.style.color = "white";
+                                    btn.innerText = nomiMosse[azione_id] || ("Azione " + azione_id); 
+                                    
+                                    btn.onclick = function() { 
+                                        inviaAzionePoker(azione_id); 
+                                        bottoniDiv.innerHTML = "<h4 style='color: #fff;'>Mossa inviata... Attendi.</h4>"; 
+                                    };
+                                    bottoniDiv.appendChild(btn);
+                                });
+                            } else {
+                                bottoniDiv.innerHTML = "<h4 style='color: rgba(255,255,255,0.5);'>È il turno di " + dati.giocatore_attivo + ". Aspetta...</h4>";
+                            }
+                        }
+
+                        if (dati.tipo === "fine_mano") {
+                            if (dati.riassunto) {
+                                document.getElementById("winnerText").innerText = dati.riassunto;
+                                document.getElementById("winnerOverlay").classList.add("show");
+                            }
+
+                            var bottoniDiv = document.getElementById("bottoniAzione");
+                            bottoniDiv.innerHTML = "";
+                            
+                            if (dati.bankrolls[myUsername] !== undefined) { document.getElementById("valoreBanca").innerText = dati.bankrolls[myUsername]; }
+
+                            var btnGioca = document.createElement("button");
+                            btnGioca.className = "btn-poker";
+                            btnGioca.style.background = "linear-gradient(135deg, #66bb6a 0%, #2e7d32 100%)";
+                            btnGioca.style.color = "white";
+                            btnGioca.innerText = "🃏 Gioca Nuova Mano";
+                            
+                            btnGioca.onclick = function() {
+                                inviaStart();
+                                bottoniDiv.innerHTML = "<h4 style='color: #fff;'>Inizializzazione mano...</h4>";
+                            };
+                            
+                            bottoniDiv.appendChild(btnGioca);
+                            document.getElementById("turnoText").innerText = "Risultati sul tavolo.";
+                        }
+                    } catch (e) {
+                        aggiungiMessaggioChat(event.data);
+                    }
+                };
+            }
+
+            function aggiungiMessaggioChat(testo) {
+                var messages = document.getElementById('messages');
+                var message = document.createElement('li');
+                message.innerText = testo;
+                messages.appendChild(message);
+                messages.scrollTop = messages.scrollHeight;
+            }
+
+            function sendAction() {
+                var input = document.getElementById("actionInput");
+                if (input.value.trim() !== "" && ws) { ws.send(input.value); input.value = ''; }
+            }
+            
+            document.getElementById("actionInput").addEventListener("keypress", function(event) {
+                if (event.key === "Enter") { event.preventDefault(); sendAction(); }
+            });
+
+            function inviaAzionePoker(azione_id){
+                ws.send(JSON.stringify({ "azione": azione_id }));
+            }
+
+            const mappaSemi = { 'S': { simbolo: '♠', colore: '#1a1a1a' }, 'H': { simbolo: '♥', colore: '#d32f2f' }, 'D': { simbolo: '♦', colore: '#d32f2f' }, 'C': { simbolo: '♣', colore: '#1a1a1a' } };
+            function creaCartaHTML(stringaRLCard) {
+                var lettera_seme = stringaRLCard.charAt(0);
+                var valore = stringaRLCard.substring(1);
+                if (valore === 'T') valore = '10';
+                var info = mappaSemi[lettera_seme];
+                return `<div class="carta-gioco" style="color: ${info.colore};"><div class="valore-carta">${valore}</div><div class="seme-carta">${info.simbolo}</div></div>`;
+            }
+        </script>
+    </body>
+</html>
