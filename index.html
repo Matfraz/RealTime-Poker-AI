@@ -225,7 +225,7 @@
                 myUsername = input.value.trim();
                 if (!myUsername) return;
 
-                ws = new WebSocket("wss://poker-no-ai.onrender.com/ws/" + encodeURIComponent(myUsername));
+                ws = new WebSocket("ws://localhost:8000/ws/" + encodeURIComponent(myUsername))
 
                 ws.onopen = function() {
                     document.getElementById("loginArea").style.display = "none";
